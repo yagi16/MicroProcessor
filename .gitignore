@@ -10,3 +10,9 @@
 *.ip_user.files
 *.xpr
 .Xil
+
+*.o
+*.dump
+*.asm
+*.bin
+*.dat
