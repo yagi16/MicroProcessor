@@ -35,8 +35,21 @@ void my_itoa();
 #define CATS_NUM 10
 #define GAME_TIME 200 // rimit over 20s
 
+#define CAT_IMAGE_ROW 9
+#define CAT_IMAGE_COL 10
+
+#define TOY_IMAGE_ROW 8
+#define TOY_IMAGE_COL 3
+
 int state = INIT;
 int cat_state[CATS_NUM] = {0};
+/*
+    0 : not exist
+    1 : exist
+    2 : satisfied
+    3 : angry
+*/
+
 int cat_timer[CATS_NUM] = {0};
 int cat_position[CATS_NUM][2] = {0};
 unsigned int randNum; // seed
@@ -44,14 +57,19 @@ int toy_position = 0; // init_pos
 int score = 0;
 int game_timer;
 
+int cat_normal_image[9][10] = {0};
+
+int cat_satisfied_image[9][10] = {0};
+
+int cat_angry_image[9][10] = {0};
+
+int toy_image[8][3] = {0};
+
+int spawn_timer_max = 10;
+
 /* interrupt_handler() is called every 100msec */
 void interrupt_handler() {
     static int spawn_timer;
-    static int cnt = 0;
-    volatile int *seg7_ptr = (int *)0xff18;
-    cnt++;
-    if (cnt % 10 == 0)
-	*seg7_ptr = cnt / 10;
 
     if (state == INIT) {
     } else if (state == OPENING) {
@@ -61,6 +79,7 @@ void interrupt_handler() {
         if (spawn_timer <= 0) {
             int idx = my_rand();
             cat_state[idx] = 1;
+            //spawn_timer_max--;
             cat_timer[idx] = 10;
             spawn_timer = 10;
         } else {
@@ -70,9 +89,21 @@ void interrupt_handler() {
         for (int i = 0; i < CATS_NUM; i++) {
             if (cat_state[i] == 1) {
                 if (cat_timer[i] <= 0) {
-                    cat_state[i] = 0;
-                } else {
+                    cat_state[i] = 3;
+                }else {
                     cat_timer[i]--;
+                }
+            }
+            else if(cat_state[i] == 2){
+                cat_timer[i]--;
+                if(cat_timer[i] <= 0){
+                    cat_state[i] = 0;
+                }
+            }
+            else if(cat_state[i] == 3){
+                cat_timer[i]--;
+                if(cat_timer[i] <= -5){
+                    cat_state[i] = 0;
                 }
             }
         }
@@ -87,7 +118,8 @@ void interrupt_handler() {
         show_cats();
         int x = cat_position[toy_position][0];
         int y = cat_position[toy_position][1];
-        lcd_putc(y - 1, x, 'x');
+        //lcd_putc(y - 1, x, 'x');
+        render_image((y - 1) * 8, x * 8 + 4, TOY_IMAGE_ROW, TOY_IMAGE_COL, toy_image);
         show_score();
         lcd_sync_vbuf();
 
@@ -96,6 +128,7 @@ void interrupt_handler() {
         char score_str[16];
         char prefix[] = "score:";
         char border[] = "_________";
+
         lcd_puts(2, 0, border);
         my_itoa(score, score_str + 6, 10);
         for (int i = 0; i < 6; i++) score_str[i] = prefix[i];
@@ -116,6 +149,74 @@ void main() {
                 cat_position[i][0] = local_cat_position[i][0];
                 cat_position[i][1] = local_cat_position[i][1];
             }
+
+            int local_cat_normal_image[CAT_IMAGE_ROW][CAT_IMAGE_COL] = {
+                {0,0,1,0,0,0,0,1,0,0},
+                {0,1,0,1,0,0,1,0,1,0},
+                {0,1,0,0,1,1,0,0,1,0},
+                {0,1,0,0,0,0,0,0,1,0},
+                {1,0,0,0,0,0,0,0,0,1},
+                {1,0,0,1,0,0,1,0,0,1},
+                {1,0,0,1,0,0,1,0,0,1},
+                {0,1,0,0,0,0,0,0,1,0},
+                {0,0,1,1,1,1,1,1,0,0}
+            };
+            for (int i = 0; i < CAT_IMAGE_ROW; i++) {
+                for (int j = 0; j < CAT_IMAGE_COL; j++) {
+                    cat_normal_image[i][j] = local_cat_normal_image[i][j];
+                }
+            }
+
+            int local_cat_satisfied_image[CAT_IMAGE_ROW][CAT_IMAGE_COL] = {
+                {0,0,1,0,0,0,0,1,0,0},
+                {0,1,0,1,0,0,1,0,1,0},
+                {0,1,0,0,1,1,0,0,1,0},
+                {0,1,0,0,0,0,0,0,1,0},
+                {1,0,0,1,0,0,0,1,0,1},
+                {1,0,1,0,1,0,1,0,1,1},
+                {1,0,0,0,0,0,0,0,0,1},
+                {0,1,0,0,0,0,0,0,1,0},
+                {0,0,1,1,1,1,1,1,0,0}
+            };
+            for (int i = 0; i < CAT_IMAGE_ROW; i++) {
+                for (int j = 0; j < CAT_IMAGE_COL; j++) {
+                    cat_satisfied_image[i][j] = local_cat_satisfied_image[i][j];
+                }
+            }
+
+            int local_cat_angry_image[CAT_IMAGE_ROW][CAT_IMAGE_COL] = {
+                {0,0,1,0,0,0,0,1,0,0},
+                {0,1,0,1,0,0,1,0,1,0},
+                {0,1,0,0,1,1,0,0,1,0},
+                {0,1,0,0,0,0,0,0,1,0},
+                {1,0,0,0,0,0,0,0,0,1},
+                {1,0,1,0,0,0,0,1,0,1},
+                {1,0,0,1,0,0,1,0,0,1},
+                {0,1,0,0,0,0,0,0,1,0},
+                {0,0,1,1,1,1,1,1,0,0}
+            };
+            for (int i = 0; i < CAT_IMAGE_ROW; i++) {
+                for (int j = 0; j < CAT_IMAGE_COL; j++) {
+                    cat_angry_image[i][j] = local_cat_angry_image[i][j];
+                }
+            }
+
+            int local_toy_image[TOY_IMAGE_ROW][TOY_IMAGE_COL] = {
+                {0,1,0},
+                {0,1,0},
+                {0,1,0},
+                {0,1,0},
+                {1,0,1},
+                {1,0,1},
+                {1,0,1},
+                {0,1,0}
+            };
+            for(int i = 0;i < TOY_IMAGE_ROW;i++){
+                for(int j = 0;j < TOY_IMAGE_COL;j++){
+                    toy_image[i][j] = local_toy_image[i][j];
+                }
+            }
+
             randNum = 1100; // seed
 
             lcd_init();
@@ -144,7 +245,8 @@ void play() {
             if (prev_key_state != direction) { // new input
                 if (direction == INTERACT_KEY) { // key 9 is pressed
                     if (cat_state[toy_position] == 1) {
-                        cat_state[toy_position] = 0;
+                        cat_state[toy_position] = 2;
+                        cat_timer[toy_position] = 5;
                         led_blink();
                         score++;
                     }
@@ -168,6 +270,16 @@ void play() {
     }
 }
 
+void render_image(int x, int y, int row, int col, int image[row][col]) {
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < col; j++) {
+            if (image[i][j] == 1) {
+                lcd_set_vbuf_pixel(x + i, y + j, 0, 255, 0);
+            }
+        }
+    }
+}
+
 /*
  * Display function
  */
@@ -175,10 +287,19 @@ void show_cats() {
     for (int i = 0; i < CATS_NUM; i++) {
         int x = cat_position[i][0];
         int y = cat_position[i][1];
-        if (cat_state[i] == 1) {
-            lcd_putc(y, x, 'C');
-        } else if (cat_state[i] == 0) {
-            lcd_putc(y, x, '_');
+        switch(cat_state[i]){
+            case 0:
+                lcd_putc(y, x, '_');
+                break;
+            case 1:
+                render_image(y * 8, x * 8,CAT_IMAGE_ROW,CAT_IMAGE_COL,cat_normal_image);
+                break;
+            case 2:
+                render_image(y * 8, x * 8,CAT_IMAGE_ROW,CAT_IMAGE_COL,cat_satisfied_image);
+                break;
+            case 3:
+                render_image(y * 8, x * 8,CAT_IMAGE_ROW,CAT_IMAGE_COL,cat_angry_image);
+                break;
         }
     }
 }
