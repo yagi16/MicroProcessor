@@ -195,11 +195,12 @@ void show_score() {
 
 void show_opening() {
     lcd_clear_vbuf();
-    
+
     lcd_puts(1, 0, "Whack-a-mole");
     lcd_puts(4, 5, "^");
     lcd_puts(5, 5, "89");
     lcd_puts(6, 3, "<0FE>");
+    lcd_puts(7, 1, "Press key");
     
     lcd_sync_vbuf();
 }
