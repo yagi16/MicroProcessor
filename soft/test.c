@@ -3,6 +3,8 @@
 #include "ChrFont0.h"
 
 void show_ball(int pos);
+void render_image(int x, int y, int row, int col, int image[row][col]);
+void show_opening();
 void show_cats();
 void show_score();
 void play();
@@ -14,6 +16,7 @@ void led_blink();
 void lcd_init();
 void lcd_putc(int y, int x, int c);
 void lcd_puts(int y, int x, char *str);
+void lcd_set_vbuf_pixel(int row, int col, int r, int g, int b);
 void lcd_sync_vbuf();
 void lcd_clear_vbuf();
 int kypd_scan();
@@ -223,6 +226,7 @@ void main() {
             game_timer = GAME_TIME;
             state = OPENING;
         } else if (state == OPENING) {
+            show_opening();
             if (-1 != kypd_scan()) {
                 state = PLAY;
             } 
