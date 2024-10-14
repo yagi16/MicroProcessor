@@ -122,7 +122,9 @@ void main() {
             game_timer = GAME_TIME;
             state = OPENING;
         } else if (state == OPENING) {
-            state = PLAY;
+            if (-1 != kypd_scan()) {
+                state = PLAY;
+            } 
         } else if (state == PLAY) {
             play();
             state = ENDING;
@@ -189,6 +191,18 @@ void show_score() {
     my_itoa(score, score_str + 6, 10);
     for (int i = 0; i < 6; i++) score_str[i] = prefix[i];
     lcd_puts(0, 0, score_str);
+}
+
+void show_opening() {
+    lcd_clear_vbuf();
+
+    lcd_puts(1, 0, "Whack-a-mole");
+    lcd_puts(4, 5, "^");
+    lcd_puts(5, 5, "89");
+    lcd_puts(6, 3, "<0FE>");
+    lcd_puts(7, 1, "Press key");
+    
+    lcd_sync_vbuf();
 }
 
 /*
