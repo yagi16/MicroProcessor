@@ -1052,25 +1052,59 @@ $LC1:
 	.ent	interrupt_handler
 	.type	interrupt_handler, @function
 interrupt_handler:
-	.frame	$fp,80,$31		# vars= 56, regs= 2/0, args= 16, gp= 0
+	.frame	$fp,88,$31		# vars= 64, regs= 2/0, args= 16, gp= 0
 	.mask	0xc0000000,-4
 	.fmask	0x00000000,0
 	.set	noreorder
 	.set	nomacro
-	addiu	$sp,$sp,-80
-	sw	$31,76($sp)
-	sw	$fp,72($sp)
+	addiu	$sp,$sp,-88
+	sw	$31,84($sp)
+	sw	$fp,80($sp)
 	move	$fp,$sp
+	li	$2,65304			# 0xff18
+	sw	$2,24($fp)
+	lui	$2,%hi(cnt.1453)
+	lw	$2,%lo(cnt.1453)($2)
+	nop
+	addiu	$3,$2,1
+	lui	$2,%hi(cnt.1453)
+	sw	$3,%lo(cnt.1453)($2)
+	lui	$2,%hi(cnt.1453)
+	lw	$3,%lo(cnt.1453)($2)
+	li	$2,10			# 0xa
+	div	$0,$3,$2
+	bne	$2,$0,1f
+	nop
+	break	7
+1:
+	mfhi	$2
+	bne	$2,$0,$L11
+	nop
+
+	lui	$2,%hi(cnt.1453)
+	lw	$3,%lo(cnt.1453)($2)
+	li	$2,10			# 0xa
+	div	$0,$3,$2
+	bne	$2,$0,1f
+	nop
+	break	7
+1:
+	mfhi	$2
+	mflo	$3
+	lw	$2,24($fp)
+	nop
+	sw	$3,0($2)
+$L11:
 	lui	$2,%hi(state)
 	lw	$2,%lo(state)($2)
 	nop
-	beq	$2,$0,$L24
+	beq	$2,$0,$L25
 	nop
 
 	lui	$2,%hi(state)
 	lw	$3,%lo(state)($2)
 	li	$2,1			# 0x1
-	bne	$3,$2,$L12
+	bne	$3,$2,$L13
 	nop
 
 	lui	$2,%hi(spawn_timer.1452)
@@ -1078,28 +1112,28 @@ interrupt_handler:
 	lui	$2,%hi(game_timer)
 	li	$3,200			# 0xc8
 	sw	$3,%lo(game_timer)($2)
-	b	$L24
+	b	$L25
 	nop
 
-$L12:
+$L13:
 	lui	$2,%hi(state)
 	lw	$3,%lo(state)($2)
 	li	$2,2			# 0x2
-	bne	$3,$2,$L13
+	bne	$3,$2,$L14
 	nop
 
 	lui	$2,%hi(spawn_timer.1452)
 	lw	$2,%lo(spawn_timer.1452)($2)
 	nop
-	bgtz	$2,$L14
+	bgtz	$2,$L15
 	nop
 
 	jal	my_rand
 	nop
 
-	sw	$2,24($fp)
+	sw	$2,28($fp)
 	lui	$2,%hi(cat_state)
-	lw	$3,24($fp)
+	lw	$3,28($fp)
 	nop
 	sll	$3,$3,2
 	addiu	$2,$2,%lo(cat_state)
@@ -1107,7 +1141,7 @@ $L12:
 	li	$3,1			# 0x1
 	sw	$3,0($2)
 	lui	$2,%hi(cat_timer)
-	lw	$3,24($fp)
+	lw	$3,28($fp)
 	nop
 	sll	$3,$3,2
 	addiu	$2,$2,%lo(cat_timer)
@@ -1117,22 +1151,22 @@ $L12:
 	lui	$2,%hi(spawn_timer.1452)
 	li	$3,10			# 0xa
 	sw	$3,%lo(spawn_timer.1452)($2)
-	b	$L15
+	b	$L16
 	nop
 
-$L14:
+$L15:
 	lui	$2,%hi(spawn_timer.1452)
 	lw	$2,%lo(spawn_timer.1452)($2)
 	nop
 	addiu	$3,$2,-1
 	lui	$2,%hi(spawn_timer.1452)
 	sw	$3,%lo(spawn_timer.1452)($2)
-$L15:
+$L16:
 	sw	$0,16($fp)
-	b	$L16
+	b	$L17
 	nop
 
-$L19:
+$L20:
 	lui	$2,%hi(cat_state)
 	lw	$3,16($fp)
 	nop
@@ -1141,7 +1175,7 @@ $L19:
 	addu	$2,$3,$2
 	lw	$3,0($2)
 	li	$2,1			# 0x1
-	bne	$3,$2,$L17
+	bne	$3,$2,$L18
 	nop
 
 	lui	$2,%hi(cat_timer)
@@ -1152,7 +1186,7 @@ $L19:
 	addu	$2,$3,$2
 	lw	$2,0($2)
 	nop
-	bgtz	$2,$L18
+	bgtz	$2,$L19
 	nop
 
 	lui	$2,%hi(cat_state)
@@ -1162,10 +1196,10 @@ $L19:
 	addiu	$2,$2,%lo(cat_state)
 	addu	$2,$3,$2
 	sw	$0,0($2)
-	b	$L17
+	b	$L18
 	nop
 
-$L18:
+$L19:
 	lui	$2,%hi(cat_timer)
 	lw	$3,16($fp)
 	nop
@@ -1182,22 +1216,22 @@ $L18:
 	addiu	$2,$2,%lo(cat_timer)
 	addu	$2,$4,$2
 	sw	$3,0($2)
-$L17:
+$L18:
 	lw	$2,16($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L16:
+$L17:
 	lw	$2,16($fp)
 	nop
 	slt	$2,$2,10
-	bne	$2,$0,$L19
+	bne	$2,$0,$L20
 	nop
 
 	lui	$2,%hi(game_timer)
 	lw	$2,%lo(game_timer)($2)
 	nop
-	blez	$2,$L20
+	blez	$2,$L21
 	nop
 
 	lui	$2,%hi(game_timer)
@@ -1206,14 +1240,14 @@ $L16:
 	addiu	$3,$2,-1
 	lui	$2,%hi(game_timer)
 	sw	$3,%lo(game_timer)($2)
-	b	$L21
+	b	$L22
 	nop
 
-$L20:
+$L21:
 	lui	$2,%hi(state)
 	li	$3,3			# 0x3
 	sw	$3,%lo(state)($2)
-$L21:
+$L22:
 	jal	lcd_clear_vbuf
 	nop
 
@@ -1228,7 +1262,7 @@ $L21:
 	addu	$2,$3,$2
 	lw	$2,0($2)
 	nop
-	sw	$2,28($fp)
+	sw	$2,32($fp)
 	lui	$2,%hi(toy_position)
 	lw	$3,%lo(toy_position)($2)
 	lui	$2,%hi(cat_position)
@@ -1237,12 +1271,12 @@ $L21:
 	addu	$2,$3,$2
 	lw	$2,4($2)
 	nop
-	sw	$2,32($fp)
-	lw	$2,32($fp)
+	sw	$2,36($fp)
+	lw	$2,36($fp)
 	nop
 	addiu	$2,$2,-1
 	li	$6,120			# 0x78
-	lw	$5,28($fp)
+	lw	$5,32($fp)
 	move	$4,$2
 	jal	lcd_putc
 	nop
@@ -1253,14 +1287,14 @@ $L21:
 	jal	lcd_sync_vbuf
 	nop
 
-	b	$L24
+	b	$L25
 	nop
 
-$L13:
+$L14:
 	lui	$2,%hi(state)
 	lw	$3,%lo(state)($2)
 	li	$2,3			# 0x3
-	bne	$3,$2,$L24
+	bne	$3,$2,$L25
 	nop
 
 	jal	lcd_clear_vbuf
@@ -1268,21 +1302,21 @@ $L13:
 
 	li	$2,1935867904			# 0x73630000
 	ori	$2,$2,0x6f72
-	sw	$2,52($fp)
+	sw	$2,56($fp)
 	li	$2,25914			# 0x653a
-	sh	$2,56($fp)
-	sb	$0,58($fp)
+	sh	$2,60($fp)
+	sb	$0,62($fp)
 	lui	$2,%hi($LC1)
 	lw	$4,%lo($LC1)($2)
 	addiu	$3,$2,%lo($LC1)
 	lw	$3,4($3)
-	sw	$4,60($fp)
-	sw	$3,64($fp)
+	sw	$4,64($fp)
+	sw	$3,68($fp)
 	addiu	$2,$2,%lo($LC1)
 	lhu	$2,8($2)
 	nop
-	sh	$2,68($fp)
-	addiu	$2,$fp,60
+	sh	$2,72($fp)
+	addiu	$2,$fp,64
 	move	$6,$2
 	move	$5,$0
 	li	$4,2			# 0x2
@@ -1291,7 +1325,7 @@ $L13:
 
 	lui	$2,%hi(score)
 	lw	$3,%lo(score)($2)
-	addiu	$2,$fp,36
+	addiu	$2,$fp,40
 	addiu	$2,$2,6
 	li	$6,10			# 0xa
 	move	$5,$2
@@ -1300,37 +1334,37 @@ $L13:
 	nop
 
 	sw	$0,20($fp)
-	b	$L22
+	b	$L23
 	nop
 
-$L23:
+$L24:
 	lw	$2,20($fp)
 	addiu	$3,$fp,16
 	addu	$2,$3,$2
-	lb	$3,36($2)
+	lb	$3,40($2)
 	lw	$2,20($fp)
 	addiu	$4,$fp,16
 	addu	$2,$4,$2
-	sb	$3,20($2)
+	sb	$3,24($2)
 	lw	$2,20($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,20($fp)
-$L22:
+$L23:
 	lw	$2,20($fp)
 	nop
 	slt	$2,$2,6
-	bne	$2,$0,$L23
+	bne	$2,$0,$L24
 	nop
 
-	addiu	$2,$fp,36
+	addiu	$2,$fp,40
 	move	$6,$2
 	move	$5,$0
 	li	$4,3			# 0x3
 	jal	lcd_puts
 	nop
 
-	addiu	$2,$fp,60
+	addiu	$2,$fp,64
 	move	$6,$2
 	move	$5,$0
 	li	$4,4			# 0x4
@@ -1340,12 +1374,12 @@ $L22:
 	jal	lcd_sync_vbuf
 	nop
 
-$L24:
+$L25:
 	nop
 	move	$sp,$fp
-	lw	$31,76($sp)
-	lw	$fp,72($sp)
-	addiu	$sp,$sp,80
+	lw	$31,84($sp)
+	lw	$fp,80($sp)
+	addiu	$sp,$sp,88
 	jr	$31
 	nop
 
@@ -1393,11 +1427,11 @@ main:
 	sw	$31,108($sp)
 	sw	$fp,104($sp)
 	move	$fp,$sp
-$L32:
+$L33:
 	lui	$2,%hi(state)
 	lw	$2,%lo(state)($2)
 	nop
-	bne	$2,$0,$L26
+	bne	$2,$0,$L27
 	nop
 
 	lui	$2,%hi($LC0)
@@ -1411,10 +1445,10 @@ $L32:
 	nop
 
 	sw	$0,16($fp)
-	b	$L27
+	b	$L28
 	nop
 
-$L28:
+$L29:
 	lw	$2,16($fp)
 	nop
 	sll	$2,$2,3
@@ -1445,11 +1479,11 @@ $L28:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L27:
+$L28:
 	lw	$2,16($fp)
 	nop
 	slt	$2,$2,10
-	bne	$2,$0,$L28
+	bne	$2,$0,$L29
 	nop
 
 	lui	$2,%hi(randNum)
@@ -1464,27 +1498,27 @@ $L27:
 	lui	$2,%hi(state)
 	li	$3,1			# 0x1
 	sw	$3,%lo(state)($2)
-	b	$L32
+	b	$L33
 	nop
 
-$L26:
+$L27:
 	lui	$2,%hi(state)
 	lw	$3,%lo(state)($2)
 	li	$2,1			# 0x1
-	bne	$3,$2,$L30
+	bne	$3,$2,$L31
 	nop
 
 	lui	$2,%hi(state)
 	li	$3,2			# 0x2
 	sw	$3,%lo(state)($2)
-	b	$L32
+	b	$L33
 	nop
 
-$L30:
+$L31:
 	lui	$2,%hi(state)
 	lw	$3,%lo(state)($2)
 	li	$2,2			# 0x2
-	bne	$3,$2,$L31
+	bne	$3,$2,$L32
 	nop
 
 	jal	play
@@ -1493,20 +1527,20 @@ $L30:
 	lui	$2,%hi(state)
 	li	$3,3			# 0x3
 	sw	$3,%lo(state)($2)
-	b	$L32
+	b	$L33
 	nop
 
-$L31:
+$L32:
 	lui	$2,%hi(state)
 	lw	$3,%lo(state)($2)
 	li	$2,3			# 0x3
-	bne	$3,$2,$L32
+	bne	$3,$2,$L33
 	nop
 
 	lui	$2,%hi(state)
 	li	$3,1			# 0x1
 	sw	$3,%lo(state)($2)
-	b	$L32
+	b	$L33
 	nop
 
 	.set	macro
@@ -1536,25 +1570,25 @@ play:
 	li	$2,500			# 0x1f4
 	sw	$2,32($fp)
 	sw	$0,20($fp)
-$L44:
+$L45:
 	jal	kypd_scan
 	nop
 
 	sw	$2,36($fp)
 	lw	$3,36($fp)
 	li	$2,-1			# 0xffffffffffffffff
-	beq	$3,$2,$L34
+	beq	$3,$2,$L35
 	nop
 
 	lw	$3,16($fp)
 	lw	$2,36($fp)
 	nop
-	beq	$3,$2,$L35
+	beq	$3,$2,$L36
 	nop
 
 	lw	$3,36($fp)
 	li	$2,9			# 0x9
-	bne	$3,$2,$L36
+	bne	$3,$2,$L37
 	nop
 
 	lui	$2,%hi(toy_position)
@@ -1565,7 +1599,7 @@ $L44:
 	addu	$2,$3,$2
 	lw	$3,0($2)
 	li	$2,1			# 0x1
-	bne	$3,$2,$L38
+	bne	$3,$2,$L39
 	nop
 
 	lui	$2,%hi(toy_position)
@@ -1584,25 +1618,25 @@ $L44:
 	addiu	$3,$2,1
 	lui	$2,%hi(score)
 	sw	$3,%lo(score)($2)
-	b	$L38
+	b	$L39
 	nop
 
-$L36:
+$L37:
 	lw	$4,36($fp)
 	jal	move_cursor
 	nop
 
-$L38:
+$L39:
 	lw	$2,28($fp)
 	nop
 	sw	$2,20($fp)
-	b	$L41
+	b	$L42
 	nop
 
-$L35:
+$L36:
 	lw	$2,20($fp)
 	nop
-	bgtz	$2,$L40
+	bgtz	$2,$L41
 	nop
 
 	lw	$4,36($fp)
@@ -1612,40 +1646,40 @@ $L35:
 	lw	$2,32($fp)
 	nop
 	sw	$2,20($fp)
-	b	$L41
+	b	$L42
 	nop
 
-$L40:
+$L41:
 	lw	$2,20($fp)
 	nop
 	addiu	$2,$2,-1
 	sw	$2,20($fp)
-	b	$L41
+	b	$L42
 	nop
 
-$L34:
+$L35:
 	sw	$0,20($fp)
-$L41:
+$L42:
 	lw	$2,36($fp)
 	nop
 	sw	$2,16($fp)
 	sw	$0,24($fp)
-	b	$L42
+	b	$L43
 	nop
 
-$L43:
+$L44:
 	lw	$2,24($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,24($fp)
-$L42:
+$L43:
 	lw	$2,24($fp)
 	nop
 	slt	$2,$2,1000
-	bne	$2,$0,$L43
+	bne	$2,$0,$L44
 	nop
 
-	b	$L44
+	b	$L45
 	nop
 
 	.set	macro
@@ -1669,10 +1703,10 @@ show_cats:
 	sw	$fp,32($sp)
 	move	$fp,$sp
 	sw	$0,16($fp)
-	b	$L46
+	b	$L47
 	nop
 
-$L49:
+$L50:
 	lui	$2,%hi(cat_position)
 	lw	$3,16($fp)
 	nop
@@ -1699,7 +1733,7 @@ $L49:
 	addu	$2,$3,$2
 	lw	$3,0($2)
 	li	$2,1			# 0x1
-	bne	$3,$2,$L47
+	bne	$3,$2,$L48
 	nop
 
 	li	$6,67			# 0x43
@@ -1708,10 +1742,10 @@ $L49:
 	jal	lcd_putc
 	nop
 
-	b	$L48
+	b	$L49
 	nop
 
-$L47:
+$L48:
 	lui	$2,%hi(cat_state)
 	lw	$3,16($fp)
 	nop
@@ -1720,7 +1754,7 @@ $L47:
 	addu	$2,$3,$2
 	lw	$2,0($2)
 	nop
-	bne	$2,$0,$L48
+	bne	$2,$0,$L49
 	nop
 
 	li	$6,95			# 0x5f
@@ -1729,16 +1763,16 @@ $L47:
 	jal	lcd_putc
 	nop
 
-$L48:
+$L49:
 	lw	$2,16($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L46:
+$L47:
 	lw	$2,16($fp)
 	nop
 	slt	$2,$2,10
-	bne	$2,$0,$L49
+	bne	$2,$0,$L50
 	nop
 
 	nop
@@ -1786,10 +1820,10 @@ show_score:
 	nop
 
 	sw	$0,16($fp)
-	b	$L51
+	b	$L52
 	nop
 
-$L52:
+$L53:
 	lw	$2,16($fp)
 	addiu	$3,$fp,16
 	addu	$2,$3,$2
@@ -1802,11 +1836,11 @@ $L52:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L51:
+$L52:
 	lw	$2,16($fp)
 	nop
 	slt	$2,$2,6
-	bne	$2,$0,$L52
+	bne	$2,$0,$L53
 	nop
 
 	addiu	$2,$fp,20
@@ -2018,20 +2052,20 @@ led_blink:
 	nop
 
 	sw	$0,16($fp)
-	b	$L63
+	b	$L64
 	nop
 
-$L64:
+$L65:
 	lw	$2,16($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L63:
+$L64:
 	lw	$3,16($fp)
 	li	$2,262144			# 0x40000
 	ori	$2,$2,0x93e0
 	slt	$2,$3,$2
-	bne	$2,$0,$L64
+	bne	$2,$0,$L65
 	nop
 
 	move	$4,$0
@@ -2039,20 +2073,20 @@ $L63:
 	nop
 
 	sw	$0,20($fp)
-	b	$L65
+	b	$L66
 	nop
 
-$L66:
+$L67:
 	lw	$2,20($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,20($fp)
-$L65:
+$L66:
 	lw	$3,20($fp)
 	li	$2,262144			# 0x40000
 	ori	$2,$2,0x93e0
 	slt	$2,$3,$2
-	bne	$2,$0,$L66
+	bne	$2,$0,$L67
 	nop
 
 	li	$4,15			# 0xf
@@ -2060,20 +2094,20 @@ $L65:
 	nop
 
 	sw	$0,24($fp)
-	b	$L67
+	b	$L68
 	nop
 
-$L68:
+$L69:
 	lw	$2,24($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,24($fp)
-$L67:
+$L68:
 	lw	$3,24($fp)
 	li	$2,262144			# 0x40000
 	ori	$2,$2,0x93e0
 	slt	$2,$3,$2
-	bne	$2,$0,$L68
+	bne	$2,$0,$L69
 	nop
 
 	move	$4,$0
@@ -2111,20 +2145,20 @@ lcd_wait:
 	move	$fp,$sp
 	sw	$4,16($fp)
 	sw	$0,0($fp)
-	b	$L70
+	b	$L71
 	nop
 
-$L71:
+$L72:
 	lw	$2,0($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,0($fp)
-$L70:
+$L71:
 	lw	$3,0($fp)
 	lw	$2,16($fp)
 	nop
 	slt	$2,$3,$2
-	bne	$2,$0,$L71
+	bne	$2,$0,$L72
 	nop
 
 	nop
@@ -2417,15 +2451,15 @@ lcd_clear_vbuf:
 	sw	$fp,12($sp)
 	move	$fp,$sp
 	sw	$0,0($fp)
-	b	$L78
-	nop
-
-$L81:
-	sw	$0,4($fp)
 	b	$L79
 	nop
 
-$L80:
+$L82:
+	sw	$0,4($fp)
+	b	$L80
+	nop
+
+$L81:
 	lui	$4,%hi(lcd_vbuf)
 	lw	$3,0($fp)
 	nop
@@ -2443,22 +2477,22 @@ $L80:
 	nop
 	addiu	$2,$2,1
 	sw	$2,4($fp)
-$L79:
+$L80:
 	lw	$2,4($fp)
 	nop
 	slt	$2,$2,96
-	bne	$2,$0,$L80
+	bne	$2,$0,$L81
 	nop
 
 	lw	$2,0($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,0($fp)
-$L78:
+$L79:
 	lw	$2,0($fp)
 	nop
 	slt	$2,$2,64
-	bne	$2,$0,$L81
+	bne	$2,$0,$L82
 	nop
 
 	nop
@@ -2489,15 +2523,15 @@ lcd_sync_vbuf:
 	sw	$fp,24($sp)
 	move	$fp,$sp
 	sw	$0,16($fp)
-	b	$L83
-	nop
-
-$L86:
-	sw	$0,20($fp)
 	b	$L84
 	nop
 
-$L85:
+$L87:
+	sw	$0,20($fp)
+	b	$L85
+	nop
+
+$L86:
 	lui	$4,%hi(lcd_vbuf)
 	lw	$3,16($fp)
 	nop
@@ -2520,22 +2554,22 @@ $L85:
 	nop
 	addiu	$2,$2,1
 	sw	$2,20($fp)
-$L84:
+$L85:
 	lw	$2,20($fp)
 	nop
 	slt	$2,$2,96
-	bne	$2,$0,$L85
+	bne	$2,$0,$L86
 	nop
 
 	lw	$2,16($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L83:
+$L84:
 	lw	$2,16($fp)
 	nop
 	slt	$2,$2,64
-	bne	$2,$0,$L86
+	bne	$2,$0,$L87
 	nop
 
 	nop
@@ -2570,15 +2604,15 @@ lcd_putc:
 	sw	$5,44($fp)
 	sw	$6,48($fp)
 	sw	$0,24($fp)
-	b	$L88
-	nop
-
-$L92:
-	sw	$0,28($fp)
 	b	$L89
 	nop
 
-$L91:
+$L93:
+	sw	$0,28($fp)
+	b	$L90
+	nop
+
+$L92:
 	lw	$2,48($fp)
 	nop
 	addiu	$2,$2,-32
@@ -2596,7 +2630,7 @@ $L91:
 	nop
 	sra	$2,$3,$2
 	andi	$2,$2,0x1
-	beq	$2,$0,$L90
+	beq	$2,$0,$L91
 	nop
 
 	lw	$2,40($fp)
@@ -2619,27 +2653,27 @@ $L91:
 	jal	lcd_set_vbuf_pixel
 	nop
 
-$L90:
+$L91:
 	lw	$2,28($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,28($fp)
-$L89:
+$L90:
 	lw	$2,28($fp)
 	nop
 	slt	$2,$2,8
-	bne	$2,$0,$L91
+	bne	$2,$0,$L92
 	nop
 
 	lw	$2,24($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,24($fp)
-$L88:
+$L89:
 	lw	$2,24($fp)
 	nop
 	slt	$2,$2,8
-	bne	$2,$0,$L92
+	bne	$2,$0,$L93
 	nop
 
 	nop
@@ -2674,10 +2708,10 @@ lcd_puts:
 	sw	$5,36($fp)
 	sw	$6,40($fp)
 	sw	$0,16($fp)
-	b	$L94
+	b	$L95
 	nop
 
-$L97:
+$L98:
 	lw	$2,16($fp)
 	lw	$3,40($fp)
 	nop
@@ -2685,7 +2719,7 @@ $L97:
 	lb	$2,0($2)
 	nop
 	slt	$2,$2,32
-	bne	$2,$0,$L99
+	bne	$2,$0,$L100
 	nop
 
 	lw	$3,36($fp)
@@ -2708,11 +2742,11 @@ $L97:
 	nop
 	addiu	$2,$2,1
 	sw	$2,16($fp)
-$L94:
+$L95:
 	lw	$2,16($fp)
 	nop
 	slt	$2,$2,12
-	beq	$2,$0,$L100
+	beq	$2,$0,$L101
 	nop
 
 	lw	$2,16($fp)
@@ -2721,15 +2755,15 @@ $L94:
 	addu	$2,$3,$2
 	lb	$2,0($2)
 	nop
-	bne	$2,$0,$L97
+	bne	$2,$0,$L98
 	nop
 
-	b	$L100
+	b	$L101
 	nop
 
-$L99:
-	nop
 $L100:
+	nop
+$L101:
 	nop
 	move	$sp,$fp
 	lw	$31,28($sp)
@@ -2763,18 +2797,18 @@ kypd_scan:
 	li	$3,7			# 0x7
 	sw	$3,0($2)
 	sw	$0,0($fp)
-	b	$L102
+	b	$L103
 	nop
 
-$L103:
+$L104:
 	lw	$2,0($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,0($fp)
-$L102:
+$L103:
 	lw	$2,0($fp)
 	nop
-	blez	$2,$L103
+	blez	$2,$L104
 	nop
 
 	lw	$2,16($fp)
@@ -2782,37 +2816,24 @@ $L102:
 	lw	$2,0($2)
 	nop
 	andi	$2,$2,0x80
-	bne	$2,$0,$L104
+	bne	$2,$0,$L105
 	nop
 
 	li	$2,1			# 0x1
-	b	$L105
+	b	$L106
 	nop
 
-$L104:
+$L105:
 	lw	$2,16($fp)
 	nop
 	lw	$2,0($2)
 	nop
 	andi	$2,$2,0x40
-	bne	$2,$0,$L106
-	nop
-
-	li	$2,4			# 0x4
-	b	$L105
-	nop
-
-$L106:
-	lw	$2,16($fp)
-	nop
-	lw	$2,0($2)
-	nop
-	andi	$2,$2,0x20
 	bne	$2,$0,$L107
 	nop
 
-	li	$2,7			# 0x7
-	b	$L105
+	li	$2,4			# 0x4
+	b	$L106
 	nop
 
 $L107:
@@ -2820,31 +2841,44 @@ $L107:
 	nop
 	lw	$2,0($2)
 	nop
-	andi	$2,$2,0x10
+	andi	$2,$2,0x20
 	bne	$2,$0,$L108
 	nop
 
-	move	$2,$0
-	b	$L105
+	li	$2,7			# 0x7
+	b	$L106
 	nop
 
 $L108:
 	lw	$2,16($fp)
+	nop
+	lw	$2,0($2)
+	nop
+	andi	$2,$2,0x10
+	bne	$2,$0,$L109
+	nop
+
+	move	$2,$0
+	b	$L106
+	nop
+
+$L109:
+	lw	$2,16($fp)
 	li	$3,11			# 0xb
 	sw	$3,0($2)
 	sw	$0,4($fp)
-	b	$L109
+	b	$L110
 	nop
 
-$L110:
+$L111:
 	lw	$2,4($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,4($fp)
-$L109:
+$L110:
 	lw	$2,4($fp)
 	nop
-	blez	$2,$L110
+	blez	$2,$L111
 	nop
 
 	lw	$2,16($fp)
@@ -2852,24 +2886,11 @@ $L109:
 	lw	$2,0($2)
 	nop
 	andi	$2,$2,0x80
-	bne	$2,$0,$L111
-	nop
-
-	li	$2,2			# 0x2
-	b	$L105
-	nop
-
-$L111:
-	lw	$2,16($fp)
-	nop
-	lw	$2,0($2)
-	nop
-	andi	$2,$2,0x40
 	bne	$2,$0,$L112
 	nop
 
-	li	$2,5			# 0x5
-	b	$L105
+	li	$2,2			# 0x2
+	b	$L106
 	nop
 
 $L112:
@@ -2877,12 +2898,12 @@ $L112:
 	nop
 	lw	$2,0($2)
 	nop
-	andi	$2,$2,0x20
+	andi	$2,$2,0x40
 	bne	$2,$0,$L113
 	nop
 
-	li	$2,8			# 0x8
-	b	$L105
+	li	$2,5			# 0x5
+	b	$L106
 	nop
 
 $L113:
@@ -2890,31 +2911,44 @@ $L113:
 	nop
 	lw	$2,0($2)
 	nop
-	andi	$2,$2,0x10
+	andi	$2,$2,0x20
 	bne	$2,$0,$L114
 	nop
 
-	li	$2,15			# 0xf
-	b	$L105
+	li	$2,8			# 0x8
+	b	$L106
 	nop
 
 $L114:
 	lw	$2,16($fp)
+	nop
+	lw	$2,0($2)
+	nop
+	andi	$2,$2,0x10
+	bne	$2,$0,$L115
+	nop
+
+	li	$2,15			# 0xf
+	b	$L106
+	nop
+
+$L115:
+	lw	$2,16($fp)
 	li	$3,13			# 0xd
 	sw	$3,0($2)
 	sw	$0,8($fp)
-	b	$L115
+	b	$L116
 	nop
 
-$L116:
+$L117:
 	lw	$2,8($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,8($fp)
-$L115:
+$L116:
 	lw	$2,8($fp)
 	nop
-	blez	$2,$L116
+	blez	$2,$L117
 	nop
 
 	lw	$2,16($fp)
@@ -2922,24 +2956,11 @@ $L115:
 	lw	$2,0($2)
 	nop
 	andi	$2,$2,0x80
-	bne	$2,$0,$L117
-	nop
-
-	li	$2,3			# 0x3
-	b	$L105
-	nop
-
-$L117:
-	lw	$2,16($fp)
-	nop
-	lw	$2,0($2)
-	nop
-	andi	$2,$2,0x40
 	bne	$2,$0,$L118
 	nop
 
-	li	$2,6			# 0x6
-	b	$L105
+	li	$2,3			# 0x3
+	b	$L106
 	nop
 
 $L118:
@@ -2947,12 +2968,12 @@ $L118:
 	nop
 	lw	$2,0($2)
 	nop
-	andi	$2,$2,0x20
+	andi	$2,$2,0x40
 	bne	$2,$0,$L119
 	nop
 
-	li	$2,9			# 0x9
-	b	$L105
+	li	$2,6			# 0x6
+	b	$L106
 	nop
 
 $L119:
@@ -2960,31 +2981,44 @@ $L119:
 	nop
 	lw	$2,0($2)
 	nop
-	andi	$2,$2,0x10
+	andi	$2,$2,0x20
 	bne	$2,$0,$L120
 	nop
 
-	li	$2,14			# 0xe
-	b	$L105
+	li	$2,9			# 0x9
+	b	$L106
 	nop
 
 $L120:
 	lw	$2,16($fp)
+	nop
+	lw	$2,0($2)
+	nop
+	andi	$2,$2,0x10
+	bne	$2,$0,$L121
+	nop
+
+	li	$2,14			# 0xe
+	b	$L106
+	nop
+
+$L121:
+	lw	$2,16($fp)
 	li	$3,14			# 0xe
 	sw	$3,0($2)
 	sw	$0,12($fp)
-	b	$L121
+	b	$L122
 	nop
 
-$L122:
+$L123:
 	lw	$2,12($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,12($fp)
-$L121:
+$L122:
 	lw	$2,12($fp)
 	nop
-	blez	$2,$L122
+	blez	$2,$L123
 	nop
 
 	lw	$2,16($fp)
@@ -2992,24 +3026,11 @@ $L121:
 	lw	$2,0($2)
 	nop
 	andi	$2,$2,0x80
-	bne	$2,$0,$L123
-	nop
-
-	li	$2,10			# 0xa
-	b	$L105
-	nop
-
-$L123:
-	lw	$2,16($fp)
-	nop
-	lw	$2,0($2)
-	nop
-	andi	$2,$2,0x40
 	bne	$2,$0,$L124
 	nop
 
-	li	$2,11			# 0xb
-	b	$L105
+	li	$2,10			# 0xa
+	b	$L106
 	nop
 
 $L124:
@@ -3017,12 +3038,12 @@ $L124:
 	nop
 	lw	$2,0($2)
 	nop
-	andi	$2,$2,0x20
+	andi	$2,$2,0x40
 	bne	$2,$0,$L125
 	nop
 
-	li	$2,12			# 0xc
-	b	$L105
+	li	$2,11			# 0xb
+	b	$L106
 	nop
 
 $L125:
@@ -3030,17 +3051,30 @@ $L125:
 	nop
 	lw	$2,0($2)
 	nop
-	andi	$2,$2,0x10
+	andi	$2,$2,0x20
 	bne	$2,$0,$L126
 	nop
 
-	li	$2,13			# 0xd
-	b	$L105
+	li	$2,12			# 0xc
+	b	$L106
 	nop
 
 $L126:
+	lw	$2,16($fp)
+	nop
+	lw	$2,0($2)
+	nop
+	andi	$2,$2,0x10
+	bne	$2,$0,$L127
+	nop
+
+	li	$2,13			# 0xd
+	b	$L106
+	nop
+
+$L127:
 	li	$2,-1			# 0xffffffffffffffff
-$L105:
+$L106:
 	move	$sp,$fp
 	lw	$fp,28($sp)
 	addiu	$sp,$sp,32
@@ -3069,14 +3103,14 @@ move_cursor:
 	sw	$4,8($fp)
 	lw	$3,8($fp)
 	li	$2,8			# 0x8
-	bne	$3,$2,$L128
+	bne	$3,$2,$L129
 	nop
 
 	lui	$2,%hi(toy_position)
 	lw	$2,%lo(toy_position)($2)
 	nop
 	slt	$2,$2,5
-	bne	$2,$0,$L135
+	bne	$2,$0,$L136
 	nop
 
 	lui	$2,%hi(toy_position)
@@ -3085,13 +3119,13 @@ move_cursor:
 	addiu	$3,$2,-5
 	lui	$2,%hi(toy_position)
 	sw	$3,%lo(toy_position)($2)
-	b	$L135
+	b	$L136
 	nop
 
-$L128:
+$L129:
 	lw	$3,8($fp)
 	li	$2,14			# 0xe
-	bne	$3,$2,$L131
+	bne	$3,$2,$L132
 	nop
 
 	lui	$2,%hi(toy_position)
@@ -3104,7 +3138,7 @@ $L128:
 1:
 	mfhi	$2
 	slt	$2,$2,4
-	beq	$2,$0,$L135
+	beq	$2,$0,$L136
 	nop
 
 	lui	$2,%hi(toy_position)
@@ -3113,20 +3147,20 @@ $L128:
 	addiu	$3,$2,1
 	lui	$2,%hi(toy_position)
 	sw	$3,%lo(toy_position)($2)
-	b	$L135
+	b	$L136
 	nop
 
-$L131:
+$L132:
 	lw	$3,8($fp)
 	li	$2,15			# 0xf
-	bne	$3,$2,$L133
+	bne	$3,$2,$L134
 	nop
 
 	lui	$2,%hi(toy_position)
 	lw	$2,%lo(toy_position)($2)
 	nop
 	slt	$2,$2,5
-	beq	$2,$0,$L135
+	beq	$2,$0,$L136
 	nop
 
 	lui	$2,%hi(toy_position)
@@ -3135,13 +3169,13 @@ $L131:
 	addiu	$3,$2,5
 	lui	$2,%hi(toy_position)
 	sw	$3,%lo(toy_position)($2)
-	b	$L135
+	b	$L136
 	nop
 
-$L133:
+$L134:
 	lw	$2,8($fp)
 	nop
-	bne	$2,$0,$L135
+	bne	$2,$0,$L136
 	nop
 
 	lui	$2,%hi(toy_position)
@@ -3153,7 +3187,7 @@ $L133:
 	break	7
 1:
 	mfhi	$2
-	blez	$2,$L135
+	blez	$2,$L136
 	nop
 
 	lui	$2,%hi(toy_position)
@@ -3162,7 +3196,7 @@ $L133:
 	addiu	$3,$2,-1
 	lui	$2,%hi(toy_position)
 	sw	$3,%lo(toy_position)($2)
-$L135:
+$L136:
 	nop
 	move	$sp,$fp
 	lw	$fp,4($sp)
@@ -3259,12 +3293,12 @@ my_itoa:
 	sw	$2,4($fp)
 	lw	$2,32($fp)
 	nop
-	bgez	$2,$L139
+	bgez	$2,$L140
 	nop
 
 	lw	$3,40($fp)
 	li	$2,10			# 0xa
-	bne	$3,$2,$L139
+	bne	$3,$2,$L140
 	nop
 
 	lw	$2,0($fp)
@@ -3277,11 +3311,11 @@ my_itoa:
 	nop
 	subu	$2,$0,$2
 	sw	$2,32($fp)
-$L139:
+$L140:
 	lw	$2,32($fp)
 	nop
 	sw	$2,8($fp)
-$L142:
+$L143:
 	lw	$3,8($fp)
 	lw	$2,40($fp)
 	nop
@@ -3295,7 +3329,7 @@ $L142:
 	lw	$2,12($fp)
 	nop
 	slt	$2,$2,10
-	beq	$2,$0,$L140
+	beq	$2,$0,$L141
 	nop
 
 	lw	$2,12($fp)
@@ -3305,10 +3339,10 @@ $L142:
 	andi	$2,$2,0x00ff
 	sll	$3,$2,24
 	sra	$3,$3,24
-	b	$L141
+	b	$L142
 	nop
 
-$L140:
+$L141:
 	lw	$2,12($fp)
 	nop
 	andi	$2,$2,0x00ff
@@ -3316,7 +3350,7 @@ $L140:
 	andi	$2,$2,0x00ff
 	sll	$3,$2,24
 	sra	$3,$3,24
-$L141:
+$L142:
 	lw	$2,0($fp)
 	nop
 	addiu	$4,$2,1
@@ -3335,7 +3369,7 @@ $L141:
 	sw	$2,8($fp)
 	lw	$2,8($fp)
 	nop
-	bne	$2,$0,$L142
+	bne	$2,$0,$L143
 	nop
 
 	lw	$2,0($fp)
@@ -3345,17 +3379,17 @@ $L141:
 	nop
 	lb	$3,0($2)
 	li	$2,45			# 0x2d
-	bne	$3,$2,$L144
+	bne	$3,$2,$L145
 	nop
 
 	lw	$2,4($fp)
 	nop
 	addiu	$2,$2,1
 	sw	$2,4($fp)
-	b	$L144
+	b	$L145
 	nop
 
-$L145:
+$L146:
 	lw	$2,0($fp)
 	nop
 	lbu	$2,0($2)
@@ -3375,7 +3409,7 @@ $L145:
 	nop
 	addiu	$2,$2,1
 	sw	$2,4($fp)
-$L144:
+$L145:
 	lw	$2,0($fp)
 	nop
 	addiu	$2,$2,-1
@@ -3384,7 +3418,7 @@ $L144:
 	lw	$2,4($fp)
 	nop
 	sltu	$2,$2,$3
-	bne	$2,$0,$L145
+	bne	$2,$0,$L146
 	nop
 
 	nop
@@ -3398,6 +3432,8 @@ $L144:
 	.set	reorder
 	.end	my_itoa
 	.size	my_itoa, .-my_itoa
+	.local	cnt.1453
+	.comm	cnt.1453,4,4
 	.local	spawn_timer.1452
 	.comm	spawn_timer.1452,4,4
 	.ident	"GCC: (GNU) 7.4.0"

@@ -1,7 +1,7 @@
 -------------------------------------
 | Tool Version : Vivado v.2023.2
-| Date         : Mon Oct 14 11:47:30 2024
-| Host         : y14c004.educ.cc.keio.ac.jp
+| Date         : Mon Oct 14 15:16:05 2024
+| Host         : y14c003.educ.cc.keio.ac.jp
 | Design       : design_1
 | Device       : xc7z010-clg400-1--
 -------------------------------------

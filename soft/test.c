@@ -47,6 +47,11 @@ int game_timer;
 /* interrupt_handler() is called every 100msec */
 void interrupt_handler() {
     static int spawn_timer;
+    static int cnt = 0;
+    volatile int *seg7_ptr = (int *)0xff18;
+    cnt++;
+    if (cnt % 10 == 0)
+	*seg7_ptr = cnt / 10;
 
     if (state == INIT) {
     } else if (state == OPENING) {
