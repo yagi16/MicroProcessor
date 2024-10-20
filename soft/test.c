@@ -6,7 +6,8 @@ void show_ball(int pos);
 void render_image(int x, int y, int row, int col, int image[row][col]);
 void show_opening();
 void show_cats();
-void show_score();
+void show_score(int y, int x);
+void decide_difficulty();
 void play();
 int  btn_check_0();
 int  btn_check_1();
@@ -34,8 +35,12 @@ void my_itoa();
 #define DOWN_KEY       0xf
 #define LEFT_KEY       0x0
 #define INTERACT_KEY   0x9
+#define RESET_KEY      0x1
 
-#define CATS_NUM 10
+#define EASY 0
+#define HARD 1
+
+#define CATS_NUM  10
 #define GAME_TIME 200 // rimit over 20s
 
 #define CAT_IMAGE_ROW 9
@@ -44,7 +49,12 @@ void my_itoa();
 #define TOY_IMAGE_ROW 8
 #define TOY_IMAGE_COL 3
 
-int state = INIT;
+#define CAT_TIMER_EASY   10-score/10
+#define SPAWN_TIMER_EASY 10-score/7
+#define CAT_TIMER_HARD   8-score/10
+#define SPAWN_TIMER_HARD 7-score/5
+
+volatile int state = INIT;
 int cat_state[CATS_NUM] = {0};
 /*
     0 : not exist
@@ -57,8 +67,9 @@ int cat_timer[CATS_NUM] = {0};
 int cat_position[CATS_NUM][2] = {0};
 unsigned int randNum; // seed
 int toy_position = 0; // init_pos
-int score = 0;
-int game_timer;
+volatile int score = 0;
+volatile int game_timer;
+int difficulty;
 
 int cat_normal_image[9][10] = {0};
 
@@ -83,13 +94,14 @@ void interrupt_handler() {
     } else if (state == OPENING) {
         spawn_timer = 0;
         game_timer = GAME_TIME;
+        score = 0;
     } else if (state == PLAY) {
         if (spawn_timer <= 0) {
             int idx = my_rand();
             cat_state[idx] = 1;
             //spawn_timer_max--;
-            cat_timer[idx] = 10;
-            spawn_timer = 10;
+            cat_timer[idx] = (difficulty == EASY) ? 10 : 7;
+            spawn_timer = (difficulty == EASY) ? 10 : 5;
         } else {
             spawn_timer--;
         }
@@ -98,6 +110,7 @@ void interrupt_handler() {
             if (cat_state[i] == 1) {
                 if (cat_timer[i] <= 0) {
                     cat_state[i] = 3;
+                    score--;
                 }else {
                     cat_timer[i]--;
                 }
@@ -128,21 +141,10 @@ void interrupt_handler() {
         int y = cat_position[toy_position][1];
         //lcd_putc(y - 1, x, 'x');
         render_image((y - 1) * 8, x * 8 + 4, TOY_IMAGE_ROW, TOY_IMAGE_COL, toy_image);
-        show_score();
+        show_score(0, 0);
         lcd_sync_vbuf();
 
     } else if (state == ENDING) {
-        lcd_clear_vbuf();
-        char score_str[16];
-        char prefix[] = "score:";
-        char border[] = "_________";
-
-        lcd_puts(2, 0, border);
-        my_itoa(score, score_str + 6, 10);
-        for (int i = 0; i < 6; i++) score_str[i] = prefix[i];
-        lcd_puts(3, 0, score_str);
-        lcd_puts(4, 0, border);
-        lcd_sync_vbuf();
     }
 }
 
@@ -228,18 +230,33 @@ void main() {
             randNum = 1100; // seed
 
             lcd_init();
+            for (int i = 0; i < CATS_NUM; i++) {
+                cat_state[i] = 0;
+                cat_timer[i] = 0;
+            }
+            toy_position = 0;
             game_timer = GAME_TIME;
+            score = 0;
+
             state = OPENING;
         } else if (state == OPENING) {
-            show_opening();
-            if (-1 != kypd_scan()) {
-                state = PLAY;
-            } 
+            decide_difficulty(); 
+            state = PLAY;
         } else if (state == PLAY) {
             play();
             state = ENDING;
         } else if (state == ENDING) {
-            state = OPENING;
+            lcd_clear_vbuf();
+            char border[] = "_________";
+            lcd_puts(2, 0, border);
+            show_score(3, 0);
+            lcd_puts(4, 0, border);
+            lcd_sync_vbuf();
+
+            int direction = kypd_scan();
+            if (direction == RESET_KEY) {
+                state = INIT;
+            }
         }
     }
 }
@@ -250,7 +267,7 @@ void play() {
     int repeat_rate = 500;
     int repeat_counter = 0;
 
-    while (1) {
+    while (state == PLAY) {
         int direction = kypd_scan();
         if (direction != -1) {
             if (prev_key_state != direction) { // new input
@@ -277,7 +294,7 @@ void play() {
             repeat_counter = 0;
         }
         prev_key_state = direction;
-        for (int i = 0; i < 1000; i++);
+        for (int i = 0; i < 600; i++);
     }
 }
 
@@ -315,24 +332,52 @@ void show_cats() {
     }
 }
 
-void show_score() {
+void show_score(int y, int x) {
     char score_str[16];
     char prefix[] = "score:";
     my_itoa(score, score_str + 6, 10);
     for (int i = 0; i < 6; i++) score_str[i] = prefix[i];
-    lcd_puts(0, 0, score_str);
+    lcd_puts(y, x, score_str);
 }
 
-void show_opening() {
-    lcd_clear_vbuf();
+void decide_difficulty() {
+    int selection = EASY;
 
-    lcd_puts(1, 0, "Whack-a-mole");
-    lcd_puts(4, 5, "^");
-    lcd_puts(5, 5, "89");
-    lcd_puts(6, 3, "<0FE>");
-    lcd_puts(7, 1, "Press key");
+    while (state == OPENING) {
+        lcd_clear_vbuf();
+
+        int direction = kypd_scan();
+        if (direction != -1) {
+            if (direction == UP_KEY) {
+                if (selection > EASY) {
+                    selection = EASY;
+                }
+            } else if (direction == DOWN_KEY) {
+                if (selection < HARD) {
+                    selection = HARD;
+                }
+            } else if (direction == INTERACT_KEY) {
+                difficulty = (selection == EASY) ? EASY : HARD;
+                state = PLAY;
+                return;
+            }
+        }
+
+        lcd_puts(1, 0, "Whack-a-mole");
+        lcd_puts(4, 4, "easy");
+        lcd_puts(6, 4, "hard");
+
+        if (selection == EASY) {
+            lcd_putc(4, 3, '>');
+        } else if (selection == HARD) {
+            lcd_putc(6, 3, '>');
+        }
+
+        lcd_sync_vbuf();
+
+        for (int i = 0; i < 300; i++);
+    }
     
-    lcd_sync_vbuf();
 }
 
 /*
@@ -485,7 +530,7 @@ int kypd_scan() {
 
 void move_cursor(int direction) {
     if (direction == UP_KEY) { // up (8)
-        if (toy_position >= 5) toy_position -= 5;
+        if (toy_position >= 4) toy_position -= 5;
     } else if (direction == RIGHT_KEY) { // right (E)
         if (toy_position % 5 < 4) toy_position += 1;
     } else if (direction == DOWN_KEY) { // down (F)
